@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>給与計算システム</title>
+  <meta charset="utf-8">
+  <meta name="description" content="給与計算システム">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/salary_calculation.css">
+</head>
+
+<body>
+    <img src="jpg/給与計算タイトル.png" alt="給与計算" width="800" id="main-title"><br>
+
+  <div id="main">
+    <img src="jpg/注意事項.png" alt="注意事項" width="500" id="caution"><br>
+    <label id="kihonkyu" for="basic_salary"><img src="jpg/基本給.png" alt="基本給" width="80"> </label>
+    <input type="text" id="basic_salary" name="basic_salary" placeholder="基本給を入力" class="kihonkyu"><br><br>
+
+    <div id="work_times">
+      <div class="work_time">
+        <table>
+          <tr>
+            <th><img src="jpg/日付.png" alt="日付" width="30"></th>
+            <th><img src="jpg/開始時刻.png" alt="開始時刻" width="60"></th>
+            <th><img src="jpg/終了時刻.png" alt="終了時刻" width="60"></th>
+          </tr>
+          <tr>
+            <td><input type="text" id="day" name="day" placeholder="1/1" class="nyuryoku"></td>
+            <td><input type="text" id="start_time1" name="start_time1" placeholder="0:00" class="nyuryoku"></td>
+            <td><input type="text" id="end_time1" name="end_time1" placeholder="32:00" class="nyuryoku"></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <br>
+    <button id="to-add" onclick="addWorkTime()"><img src="jpg/記入欄追加ボタン.png" alt="記入欄の追加" width="60"></button><br><br>
+    
+    <p id="explanation">給与の計算方法:8:00〜20:00:基本給、22:00〜29:00(翌5:00):時給×(1.25+0.25)×労働時間、それ以外の時間帯:時給×1.25×労働時間<br>
+       尚、時給の計算は基本給÷12で算出しています。</p>
+    <div id="bottom-menu">
+      <button id="total" onclick="calculateSalary()"><img src="jpg/計算ボタン.png" alt="計算" width="60"></button>
+      <label id="kyuyo" for="salary"><img src="jpg/給与.png" alt="給与" width="80"> </label>
+      <input class="kyuyo" type="text" id="salary" name="salary" readonly>
+    </div>
+
+  </div>
+  
+
+  <script>
+    let workTimeCount = 1; // 労働時間入力欄の数
+
+    function addWorkTime() {
+      workTimeCount++;
+      const workTimesDiv = document.getElementById("work_times");
+      const newWorkTimeDiv = document.createElement("div");
+      newWorkTimeDiv.className = "work_time";
+      newWorkTimeDiv.innerHTML = `
+      <tr>
+          <td><input type="text" id="day" name="day" placeholder="1/1" class="nyuryoku"></td>
+          <td><input type="text" id="start_time${workTimeCount}" name="start_time${workTimeCount}" placeholder="0:00" class="nyuryoku"></td>
+          <td><input type="text" id="end_time${workTimeCount}" name="end_time${workTimeCount}" placeholder="32:00" class="nyuryoku"></td>
+      </tr>
+      `;
+      workTimesDiv.appendChild(newWorkTimeDiv);
+    }
+
+    function calculateSalary() {
+      const basicSalary = parseFloat(document.getElementById("basic_salary").value);
+      if (isNaN(basicSalary)) {
+        document.getElementById("salary").value = "基本給が無効です";
+        return;
+      }
+
+      let totalSalary = 0;
+
+      for (let i = 1; i <= workTimeCount; i++) {
+        const startTimeElement = document.getElementById(`start_time${i}`);
+        const endTimeElement = document.getElementById(`end_time${i}`);
+
+        // start_time と end_time が存在するか確認
+        if (startTimeElement && endTimeElement) {
+            const startTime = startTimeElement.value;
+            const endTime = endTimeElement.value;
+
+            if (startTime && endTime) {
+                totalSalary += calculateSalaryByTime(basicSalary, startTime, endTime)
+            }
+        } else {
+            console.error(`start_time${i} または end_time${i} が見つかりません`);
+        }
+      }
+
+      document.getElementById("salary").value = totalSalary.toFixed(2);
+    }
+
+    function calculateSalaryByTime(basicSalary, startTime, endTime) {
+      const hourlyWage = basicSalary / 12;
+      let salary = 0;
+
+      const timeZones = [
+        { start: 0, end: 5, rate: 1.25 + 0.25 },
+        { start: 5, end: 8, rate: 1.25 },
+        { start: 8, end: 20, rate: 1 },
+        { start: 20, end: 22, rate: 1.25 },
+        { start: 22, end: 29, rate: 1.25 + 0.25 },
+        { start: 29, end: 32, rate: 1.25 }
+      ];
+
+      const { timeZoneOverlaps } = calculateWorkHours(startTime, endTime, timeZones);
+
+      for (const timeZone of timeZones) {
+        const overlap = timeZoneOverlaps[`${timeZone.start}-${timeZone.end}`];
+        if (overlap > 0) {
+          salary += hourlyWage * timeZone.rate * overlap;
+        }
+      }
+
+      return salary;
+    }
+
+    function calculateWorkHours(startTime, endTime, timeZones) {
+      const start = parseTime(startTime);
+      const end = parseTime(endTime);
+
+      const timeZoneOverlaps = {};
+
+      for (const timeZone of timeZones) {
+        const timeZoneStart = timeZone.start * 60 * 60 * 1000;
+        const timeZoneEnd = timeZone.end * 60 * 60 * 1000;
+
+        let overlapStart = Math.max(start, timeZoneStart);
+        let overlapEnd = Math.min(end, timeZoneEnd);
+
+        let overlap = 0;
+        if (overlapEnd > overlapStart){
+            overlap = (overlapEnd - overlapStart) / (60 * 60 * 1000);
+        } else {
+            overlap = 0;
+        }
+
+        timeZoneOverlaps[`${timeZone.start}-${timeZone.end}`] = overlap;
+      }
+
+      return { timeZoneOverlaps };
+    }
+
+    function parseTime(timeString) {
+        const [hours, minutes] = timeString.split(":").map(Number);
+        return hours * 60 * 60 * 1000 + minutes * 60 * 1000;
+    }
+  </script>
+</body>
+</html>

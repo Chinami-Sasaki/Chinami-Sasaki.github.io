@@ -1,0 +1,76 @@
+body {
+    font-family: "Source Sans Pro","Hiragino Kaku Gothic ProN", Meiryo, Arial, sans-serif;
+    width: 700px;
+    margin-right: auto;
+    margin-left: auto;
+    margin-top: 50px;
+    margin-bottom: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#caution {
+    margin: auto;
+}
+
+#main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 30px;
+}
+.kihonkyu {
+    font-size: 30px;
+    text-align: center;
+    width: 200px;
+    height: 30px;
+    border-radius: 5px;
+    border: 2px solid #ccc;
+}
+.nyuryoku {
+    width: 200px;
+    height: 20px;
+    border-radius: 5px;
+    border: 2px solid #ccc;
+    font-size: 20px;
+    text-align: center;
+}
+.kyuyo {
+    font-size: large;
+    width: 200px;
+    height: 30px;
+    border-radius: 5px;
+    border: 2px solid #ccc;
+    margin-top: 12px;
+}
+
+#to-add {
+    cursor: pointer;
+    border: none;
+    background-color: white;
+    align-self: flex-end;
+}
+
+#bottom-menu {
+    display: flex;
+}
+#total {
+    cursor: pointer;
+    border: none;
+    background-color: white;
+    margin-right: 10px;
+}
+#kyuyo {
+    margin-top: 10px;
+    margin-right: 10px;
+    text-align: center;
+}
+#explanation {
+    font-size: 8px;
+
+}
+
+::placeholder {
+    color: lightgray;
+}
